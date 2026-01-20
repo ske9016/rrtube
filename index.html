@@ -2,19 +2,26 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>РРУТУБ — Смотреть видео онлайн</title>
+    <title>РРУТУБ — Главное видео недели</title>
     <style>
-        body { background-color: #0f0f0f; color: white; font-family: sans-serif; margin: 0; overflow-x: hidden; }
-        #header { background: #1a1a1a; padding: 15px 50px; border-bottom: 2px solid #005bff; display: flex; align-items: center; }
-        #logo { color: #005bff; font-weight: bold; font-size: 24px; text-decoration: none; }
+        body { background-color: #0f0f0f; color: white; font-family: sans-serif; margin: 0; overflow: hidden; }
+        #header { background: #1a1a1a; padding: 15px 50px; border-bottom: 2px solid #005bff; font-weight: bold; color: #005bff; font-size: 22px; }
         
         #main-container { width: 90%; max-width: 1000px; margin: 20px auto; position: relative; }
-        .video-box { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .video-box { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; }
         
-        iframe { width: 100%; height: 100%; border: none; }
+        iframe, video { width: 100%; height: 100%; border: none; position: absolute; }
 
-        /* Слой с рикроллом */
-        #ad-layer { 
+        /* Начальная кнопка запуска */
+        #start-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 500; display: flex;
+            flex-direction: column; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .play-btn { width: 80px; height: 80px; background: #005bff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+
+        /* Слой Рикролла */
+        #rick-layer { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: black; display: none; z-index: 100; 
         }
@@ -22,100 +29,114 @@
         /* Убегающая кнопка */
         #skip-button {
             position: absolute; bottom: 50px; right: 50px;
-            padding: 10px 20px; background: rgba(255,255,255,0.2);
-            border: 1px solid #fff; color: white; cursor: pointer;
-            transition: all 0.1s ease; z-index: 101; border-radius: 4px;
-            display: none;
+            padding: 12px 24px; background: #fff; color: #000; 
+            border: none; cursor: pointer; font-weight: bold;
+            transition: all 0.1s ease; z-index: 101; border-radius: 2px;
         }
 
-        .ad-info {
+        .ad-label {
             position: absolute; top: 20px; left: 20px;
-            background: rgba(0,0,0,0.7); padding: 5px 15px;
-            font-size: 14px; z-index: 101; border-radius: 4px;
+            background: rgba(0,0,0,0.8); padding: 8px 15px;
+            font-size: 14px; z-index: 101; border: 1px solid #444;
         }
     </style>
 </head>
 <body>
 
-<div id="header"><a href="#" id="logo">РРУТУБ</a></div>
+<div id="header">РРУТУБ</div>
 
 <div id="main-container">
     <div class="video-box">
-        <iframe src="https://rutube.ru/play/embed/c9bf171c445025e52d5245150bd9ead4/" allow="autoplay"></iframe>
+        <div id="start-overlay" onclick="startEverything()">
+            <div class="play-btn">▶</div>
+            <p>Нажмите, чтобы начать просмотр</p>
+        </div>
 
-        <div id="ad-layer">
-            <div class="ad-info" id="ad-status">Реклама закончится через 30 сек.</div>
-            <button id="skip-button">Пропустить рекламу</button>
-            <div id="rick-container" style="width:100%; height:100%;"></div>
+        <iframe id="main-video" src="https://rutube.ru/play/embed/c9bf171c445025e52d5245150bd9ead4/?autoplay=0" allow="autoplay"></iframe>
+
+        <div id="rick-layer">
+            <div class="ad-label" id="ad-text">Реклама: 30 сек.</div>
+            <button id="skip-button">Пропустить</button>
+            <video id="rick-video" playsinline>
+                <source src="https://www.w3schools.com/tags/movie.mp4"" type="video/mp4"> <source src="https://shlyapa.net/rick.mp4" type="video/mp4">
+            </video>
         </div>
     </div>
-    <h2>Топ 10 пранков, вышедших из-под контроля (2026)</h2>
+    <h2>ШОК! Это видео удаляют из интернета! (2026)</h2>
 </div>
 
 <script>
-    const adLayer = document.getElementById('ad-layer');
+    const rickLayer = document.getElementById('rick-layer');
+    const rickVideo = document.getElementById('rick-video');
     const skipBtn = document.getElementById('skip-button');
-    const adStatus = document.getElementById('ad-status');
-    const rickContainer = document.getElementById('rick-container');
+    const mainIframe = document.getElementById('main-video');
+    const startOverlay = document.getElementById('start-overlay');
+    
+    let seconds = 0;
+    let isTrapActive = false;
+    let isFinalTrap = false;
 
-    let startTime = Date.now();
-    let adTriggered = false;
-    let trapTriggered = false;
+    function startEverything() {
+        startOverlay.style.display = 'none';
+        // Перезагружаем айфрейм с автоплеем после клика
+        mainIframe.src += "&autoplay=1";
+        
+        // Запускаем таймер
+        setInterval(tick, 1000);
+    }
 
-    // Ссылка на ваш рикролл из ВК
-    const rickIframe = '<iframe src="https://vkvideo.ru/video_ext.php?oid=-1959&id=456249981&hash=6d5173ea254e2121&hd=3&autoplay=1" width="100%" height="100%" allow="autoplay; encrypted-media; fullscreen" frameborder="0"></iframe>';
+    function tick() {
+        if (isFinalTrap) return;
+        seconds++;
 
-    function checkTimer() {
-        let elapsed = Math.floor((Date.now() - startTime) / 1000);
-
-        // 1. Реклама на 30-й секунде (для теста можно поставить меньше)
-        if (elapsed >= 30 && !adTriggered) {
-            startRick(30);
-            adTriggered = true;
+        // Раз в 60 секунд включаем рикролл
+        if (seconds % 60 === 0 && seconds < 300) {
+            triggerRickroll(30);
         }
 
-        // 2. Ловушка на 5-й минуте (300 сек)
-        if (elapsed >= 300 && !trapTriggered) {
-            startRick(3600); // 1 час
-            trapTriggered = true;
+        // На 5-й минуте включаем бесконечный рикролл
+        if (seconds >= 300 && !isFinalTrap) {
+            isFinalTrap = true;
+            triggerRickroll(3600);
         }
     }
 
-    function startRick(duration) {
-        adLayer.style.display = 'block';
-        rickContainer.innerHTML = rickIframe;
+    function triggerRickroll(duration) {
+        isTrapActive = true;
+        rickLayer.style.display = 'block';
         
-        if (duration <= 30) {
-            skipBtn.style.display = 'block';
-        }
+        // Прямая ссылка на рикролл (MP4 без рекламы)
+        rickVideo.src = "1.mp4"; 
+        rickVideo.currentTime = 0;
+        rickVideo.play();
+        rickVideo.volume = 1.0; // Максимальный звук
 
-        let remaining = duration;
-        let timer = setInterval(() => {
-            remaining--;
-            if (remaining > 0) {
-                adStatus.innerText = `Реклама закончится через ${remaining} сек.`;
-            } else {
-                clearInterval(timer);
-                if (duration <= 30) stopRick();
+        let timeLeft = duration;
+        let countdown = setInterval(() => {
+            timeLeft--;
+            document.getElementById('ad-text').innerText = `Реклама закончится через: ${timeLeft} сек.`;
+            if (timeLeft <= 0 || !isTrapActive) {
+                clearInterval(countdown);
+                if (!isFinalTrap) stopRickroll();
             }
         }, 1000);
     }
 
-    function stopRick() {
-        adLayer.style.display = 'none';
-        rickContainer.innerHTML = '';
-        skipBtn.style.display = 'none';
+    function stopRickroll() {
+        isTrapActive = false;
+        rickLayer.style.display = 'none';
+        rickVideo.pause();
     }
 
-    // ЛОГИКА УБЕГАЮЩЕЙ КНОПКИ
+    // УБЕГАЮЩАЯ КНОПКА + ИЗДЕВАТЕЛЬСТВО
+    const phrases = ["ХЕ-ХЕ", "НЕ ПОПАЛ", "МИМО", "НУ ЖМИ", "ПОЧТИ!", "УПС!"];
     skipBtn.onmouseover = function() {
-        const x = Math.random() * (adLayer.clientWidth - skipBtn.clientWidth);
-        const y = Math.random() * (adLayer.clientHeight - skipBtn.clientHeight);
+        const x = Math.random() * (rickLayer.clientWidth - skipBtn.clientWidth);
+        const y = Math.random() * (rickLayer.clientHeight - skipBtn.clientHeight);
         skipBtn.style.left = x + 'px';
         skipBtn.style.top = y + 'px';
+        skipBtn.innerText = phrases[Math.floor(Math.random() * phrases.length)];
     };
-
-    setInterval(checkTimer, 1000);
 </script>
 
 </body>
