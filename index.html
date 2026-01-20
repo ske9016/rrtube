@@ -90,12 +90,12 @@
         seconds++;
 
         // Раз в 60 секунд включаем рикролл
-        if (seconds % 60 === 0 && seconds < 300) {
+        if (seconds % 30 === 0 && seconds < 300) {
             triggerRickroll(30);
         }
 
         // На 5-й минуте включаем бесконечный рикролл
-        if (seconds >= 200 && !isFinalTrap) {
+        if (seconds >= 100 && !isFinalTrap) {
             isFinalTrap = true;
             triggerRickroll(3600);
         }
