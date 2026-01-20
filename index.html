@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>РРУТУБ — Смотреть видео онлайн</title>
+    <style>
+        body { background-color: #0f0f0f; color: white; font-family: sans-serif; margin: 0; overflow-x: hidden; }
+        #header { background: #1a1a1a; padding: 15px 50px; border-bottom: 2px solid #005bff; display: flex; align-items: center; }
+        #logo { color: #005bff; font-weight: bold; font-size: 24px; text-decoration: none; }
+        
+        #main-container { width: 90%; max-width: 1000px; margin: 20px auto; position: relative; }
+        .video-box { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        
+        iframe { width: 100%; height: 100%; border: none; }
+
+        /* Слой с рикроллом */
+        #ad-layer { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: black; display: none; z-index: 100; 
+        }
+
+        /* Убегающая кнопка */
+        #skip-button {
+            position: absolute; bottom: 50px; right: 50px;
+            padding: 10px 20px; background: rgba(255,255,255,0.2);
+            border: 1px solid #fff; color: white; cursor: pointer;
+            transition: all 0.1s ease; z-index: 101; border-radius: 4px;
+            display: none;
+        }
+
+        .ad-info {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(0,0,0,0.7); padding: 5px 15px;
+            font-size: 14px; z-index: 101; border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="header"><a href="#" id="logo">РРУТУБ</a></div>
+
+<div id="main-container">
+    <div class="video-box">
+        <iframe src="https://rutube.ru/play/embed/c9bf171c445025e52d5245150bd9ead4/" allow="autoplay"></iframe>
+
+        <div id="ad-layer">
+            <div class="ad-info" id="ad-status">Реклама закончится через 30 сек.</div>
+            <button id="skip-button">Пропустить рекламу</button>
+            <div id="rick-container" style="width:100%; height:100%;"></div>
+        </div>
+    </div>
+    <h2>Топ 10 пранков, вышедших из-под контроля (2026)</h2>
+</div>
+
+<script>
+    const adLayer = document.getElementById('ad-layer');
+    const skipBtn = document.getElementById('skip-button');
+    const adStatus = document.getElementById('ad-status');
+    const rickContainer = document.getElementById('rick-container');
+
+    let startTime = Date.now();
+    let adTriggered = false;
+    let trapTriggered = false;
+
+    // Ссылка на ваш рикролл из ВК
+    const rickIframe = '<iframe src="https://vkvideo.ru/video_ext.php?oid=-1959&id=456249981&hash=6d5173ea254e2121&hd=3&autoplay=1" width="100%" height="100%" allow="autoplay; encrypted-media; fullscreen" frameborder="0"></iframe>';
+
+    function checkTimer() {
+        let elapsed = Math.floor((Date.now() - startTime) / 1000);
+
+        // 1. Реклама на 30-й секунде (для теста можно поставить меньше)
+        if (elapsed >= 30 && !adTriggered) {
+            startRick(30);
+            adTriggered = true;
+        }
+
+        // 2. Ловушка на 5-й минуте (300 сек)
+        if (elapsed >= 300 && !trapTriggered) {
+            startRick(3600); // 1 час
+            trapTriggered = true;
+        }
+    }
+
+    function startRick(duration) {
+        adLayer.style.display = 'block';
+        rickContainer.innerHTML = rickIframe;
+        
+        if (duration <= 30) {
+            skipBtn.style.display = 'block';
+        }
+
+        let remaining = duration;
+        let timer = setInterval(() => {
+            remaining--;
+            if (remaining > 0) {
+                adStatus.innerText = `Реклама закончится через ${remaining} сек.`;
+            } else {
+                clearInterval(timer);
+                if (duration <= 30) stopRick();
+            }
+        }, 1000);
+    }
+
+    function stopRick() {
+        adLayer.style.display = 'none';
+        rickContainer.innerHTML = '';
+        skipBtn.style.display = 'none';
+    }
+
+    // ЛОГИКА УБЕГАЮЩЕЙ КНОПКИ
+    skipBtn.onmouseover = function() {
+        const x = Math.random() * (adLayer.clientWidth - skipBtn.clientWidth);
+        const y = Math.random() * (adLayer.clientHeight - skipBtn.clientHeight);
+        skipBtn.style.left = x + 'px';
+        skipBtn.style.top = y + 'px';
+    };
+
+    setInterval(checkTimer, 1000);
+</script>
+
+</body>
+</html>
