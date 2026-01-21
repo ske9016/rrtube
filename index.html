@@ -4,10 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>РРУТУБ — Главное видео дня</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    
     <style>
-        body { background-color: #0b0b0b; color: white; font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; overflow: hidden; }
+        body { background-color: #0b0b0b; color: white; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; overflow: hidden; }
         
-        /* Шапка */
+        /* Шапка в стиле Rutube */
         #nav { 
             background: #1a1a1a; padding: 12px 40px; 
             border-bottom: 3px solid #005bff; 
@@ -15,31 +18,31 @@
         }
         #logo { color: #005bff; font-weight: bold; font-size: 26px; text-decoration: none; letter-spacing: -1px; }
 
-        /* Видео-зона */
+        /* Контейнер плеера */
         #video-page { display: block; }
         #player-wrapper { 
             width: 95%; max-width: 1100px; margin: 30px auto; 
             position: relative; aspect-ratio: 16/9; 
-            background: #000; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            background: #000; border: 1px solid #333; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
         }
         #rutube-container, #rick-layer { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
         iframe, video { width: 100%; height: 100%; border: none; }
 
-        /* Рекламный оверлей */
+        /* Рекламный слой (Рикролл) */
         #rick-layer { display: none; z-index: 500; background: #000; }
         #skip-btn { 
             position: absolute; bottom: 40px; right: 40px; 
             padding: 12px 25px; background: #fff; color: #000; 
             border: none; font-weight: bold; cursor: pointer; 
-            z-index: 600; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 600; border-radius: 4px;
         }
         .ad-tag { 
             position: absolute; top: 20px; left: 20px; 
             background: #ed1c24; color: white; padding: 7px 15px; 
-            z-index: 600; font-size: 14px; font-weight: bold; border-radius: 2px;
+            z-index: 600; font-size: 14px; font-weight: bold;
         }
 
-        /* Кнопка старта */
+        /* Заставка перед запуском (нужна для активации звука) */
         #start-screen { 
             position: absolute; z-index: 1000; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.95); display: flex; flex-direction: column; 
@@ -47,31 +50,27 @@
         }
         .play-circle { 
             background: #005bff; width: 80px; height: 80px; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 35px; margin-bottom: 15px; transition: 0.3s; 
+            display: flex; align-items: center; justify-content: center; font-size: 35px; margin-bottom: 15px; 
         }
-        #start-screen:hover .play-circle { transform: scale(1.1); background: #0046c7; }
 
-        /* Страница статистики */
+        /* Страница статистики /stas */
         #stas-page { 
             display: none; height: 100vh; flex-direction: column; 
             align-items: center; justify-content: center; text-align: center; 
         }
-        .counter-val { font-size: 120px; color: #005bff; font-weight: bold; line-height: 1; }
-        .counter-label { font-size: 20px; color: #777; text-transform: uppercase; letter-spacing: 2px; }
+        .counter-val { font-size: 130px; color: #005bff; font-weight: bold; text-shadow: 0 0 30px rgba(0,91,255,0.4); }
+        .counter-label { font-size: 18px; color: #666; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
-<div id="nav">
-    <a href="/" id="logo">РРУТУБ</a>
-</div>
+<div id="nav"><a href="/" id="logo">РРУТУБ</a></div>
 
 <div id="video-page">
     <div id="player-wrapper">
         <div id="start-screen" onclick="initVideo()">
             <div class="play-circle">▶</div>
-            <p style="font-size: 18px;">Нажмите, чтобы начать просмотр</p>
+            <p>Нажмите, чтобы начать просмотр</p>
         </div>
         
         <div id="rutube-container"></div>
@@ -84,39 +83,41 @@
             </video>
         </div>
     </div>
-    <div style="width: 95%; max-width: 1100px; margin: 0 auto;">
-        <h1 style="font-size: 22px;">ШОК! Как сделать бесконечный двигатель из картошки и магнита</h1>
-        <p style="color: #aaa; font-size: 14px;">1 240 562 просмотра • 21 января 2026 г.</p>
+    <div style="width: 95%; max-width: 1100px; margin: 0 auto; padding-bottom: 50px;">
+        <h1 style="font-size: 22px;">КАК ЗАРАБОТАТЬ 1 000 000$ ЗА 100 СЕКУНД БЕЗ РЕГИСТРАЦИИ</h1>
+        <p style="color: #666;">2 405 112 просмотров • 21 янв. 2026 г.</p>
     </div>
 </div>
 
 <div id="stas-page">
-    <div class="counter-label">Всего зарекролено людей в мире:</div>
-    <div class="counter-val" id="count-display">...</div>
-    <div style="margin-top: 40px; color: #444;">Панель управления Стаса v1.0</div>
+    <div class="counter-label">ГЛОБАЛЬНАЯ СТАТИСТИКА РРУТУБА:</div>
+    <div class="counter-val" id="count-display">0</div>
+    <div style="color: #333; margin-top: 10px;">ЖЕРТВ ЗАРЕГИСТРИРОВАНО</div>
 </div>
 
 <script>
+    // Настройки Firebase (Твоя база)
+    const firebaseConfig = {
+        databaseURL: "https://rrutube-prikol-default-rtdb.firebaseio.com" 
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
     const rickVideo = document.getElementById('rick-video');
     const rutubeBox = document.getElementById('rutube-container');
     const rickLayer = document.getElementById('rick-layer');
     const skipBtn = document.getElementById('skip-btn');
     const countDisplay = document.getElementById('count-display');
 
-    // Настройки
-    const API_KEY = "rrutube_prikol_unique_id_2026"; // Уникальный ключ для статистики
-    const rutubeEmbed = "https://rutube.ru/play/embed/c9bf171c445025e52d5245150bd9ead4/?autoplay=1";
-
-    // ПРОВЕРКА: Если в ссылке есть ?stas, показываем статистику
+    // Проверка: зашел ли пользователь на /stas
     if (window.location.search.includes('stas')) {
         document.getElementById('video-page').style.display = 'none';
         document.getElementById('stas-page').style.display = 'flex';
         
-        // Запрос глобальной статистики
-        fetch(`https://api.countapi.xyz/get/${API_KEY}/hits`)
-            .then(res => res.json())
-            .then(data => { countDisplay.innerText = data.value || 0; })
-            .catch(() => { countDisplay.innerText = "ОШИБКА"; });
+        // Получаем данные из Firebase в реальном времени
+        database.ref('globalCount').on('value', (snapshot) => {
+            countDisplay.innerText = snapshot.val() || 0;
+        });
     }
 
     let timer = 0;
@@ -130,7 +131,7 @@
             if (isFinalTrap) return;
             timer++;
             
-            // Каждые 30 секунд (до 100-й секунды)
+            // Каждые 30 сек реклама
             if (timer % 30 === 0 && timer < 100) {
                 triggerRick(30);
             }
@@ -138,23 +139,22 @@
             // Финал на 100-й секунде
             if (timer >= 100) {
                 isFinalTrap = true;
-                triggerRick(3600); // 1 час
+                triggerRick(3600);
             }
         }, 1000);
     }
 
     function loadRutube() {
-        rutubeBox.innerHTML = `<iframe src="${rutubeEmbed}" allow="autoplay"></iframe>`;
+        rutubeBox.innerHTML = `<iframe src="https://rutube.ru/play/embed/c9bf171c445025e52d5245150bd9ead4/?autoplay=1" allow="autoplay"></iframe>`;
         rickLayer.style.display = 'none';
         rickVideo.pause();
     }
 
     function triggerRick(dur) {
-        // Отправляем сигнал о рикролле в глобальную статистику
-        fetch(`https://api.countapi.xyz/hit/${API_KEY}/hits`).catch(() => {});
+        // Увеличиваем общий счетчик в облаке Firebase
+        database.ref('globalCount').transaction((c) => (c || 0) + 1);
 
-        // Выключаем Rutube и включаем 1.mp4
-        rutubeBox.innerHTML = '';
+        rutubeBox.innerHTML = ''; // Вырубаем Rutube
         rickLayer.style.display = 'block';
         rickVideo.currentTime = 0;
         rickVideo.play();
@@ -166,32 +166,24 @@
             document.getElementById('ad-info').innerText = `РЕКЛАМА: ${left} сек.`;
             if (left <= 0) {
                 clearInterval(cd);
-                if (!isFinalTrap) loadRutube();
+                if (!isFinalTrap) loadRutube(); // Возвращаем Rutube если еще не финал
             }
         }, 1000);
     }
 
-    // ЛОГИКА УБЕГАЮЩЕЙ КНОПКИ
-    const phrases = ["НЕ ПОПАЛ!", "ХА-ХА!", "МИМО!", "КУДА?!", "НЕ-А!"];
+    // Убегающая кнопка
     skipBtn.onmouseover = function() {
-        const x = Math.random() * 75 + 10;
-        const y = Math.random() * 75 + 10;
-        skipBtn.style.left = x + '%';
-        skipBtn.style.top = y + '%';
-        skipBtn.innerText = phrases[Math.floor(Math.random() * phrases.length)];
+        skipBtn.style.left = Math.random() * 80 + 5 + '%';
+        skipBtn.style.top = Math.random() * 80 + 5 + '%';
+        skipBtn.innerText = "ХА-ХА!";
         
-        // Звук писка при промахе (через AudioContext, не нужны файлы)
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = 800;
-        gain.gain.value = 0.1;
-        osc.start();
-        osc.stop(ctx.currentTime + 0.1);
+        // Звук "ошибки" при наведении
+        try {
+            const a = new AudioContext();
+            const o = a.createOscillator();
+            o.connect(a.destination); o.start(); o.stop(a.currentTime + 0.1);
+        } catch(e) {}
     };
 </script>
-
 </body>
 </html>
